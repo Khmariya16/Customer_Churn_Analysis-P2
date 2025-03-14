@@ -1,0 +1,170 @@
+CREATE TABLE customer_churn (
+    CustomerID VARCHAR(255) PRIMARY KEY,
+    Churn VARCHAR(255),
+    Tenure INT,
+    PreferredLoginDevice VARCHAR(255),
+    CityTier INT,
+    WarehouseToHome INT,
+    PreferredPaymentMode VARCHAR(255),
+    Gender VARCHAR(255),
+    HourSpendOnApp FLOAT,
+    NumberOfDeviceRegistered INT,
+    PreferedOrderCat VARCHAR(255),
+    SatisfactionScore INT,
+    MaritalStatus VARCHAR(255),
+    NumberOfAddress INT,
+    Complain INT,
+    OrderAmountHikeFromlastYear INT,
+    CouponUsed INT,
+    OrderCount INT,
+    DaySinceLastOrder INT,
+    CashbackAmount FLOAT
+);
+
+select * from customer_churn
+
+
+--Churn Over All
+SELECT
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn;
+
+
+--Churn Rate by Gender
+SELECT Gender,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+group by Gender
+order by ChurnRate desc
+
+--Churn Rate By Preffered Login Device
+
+SELECT PreferredLoginDevice,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+group by PreferredLoginDevice
+order by ChurnRate desc
+
+--Churn Rate By City tier
+SELECT CityTier,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+group by CityTier
+order by ChurnRate 
+
+--Average Tenure of Churned vs. Non-Churned Customers
+
+SELECT
+    Churn,
+    round(AVG(Tenure),2) AS AverageTenure
+FROM customer_churn
+GROUP BY Churn;
+
+--Churn Rate by Preferred Payment Mode
+SELECT
+    PreferredPaymentMode,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY PreferredPaymentMode
+ORDER BY ChurnRate DESC;
+
+--Churn Rate by Satisfaction Score
+
+SELECT
+    SatisfactionScore,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY SatisfactionScore
+ORDER BY SatisfactionScore;
+
+--Average Cashback Amount for Churned vs. Non-Churned Customers
+
+SELECT
+    Churn,
+    AVG(CashBackAmount) AS AverageTenure
+FROM customer_churn
+GROUP BY Churn;
+
+--churn rate for customer who complained
+
+select 
+		case
+			when Complain = 0 then 'No Complaint'
+			else 'Complaint'
+		end as ComplaintStatus,
+		SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY ComplaintStatus;
+
+
+--Average Order Amount Hike from Last Year for Churned vs. Non-Churned Customers
+
+select Churn,
+Avg(OrderAmountHikeFromlastYear) as avgorderAmountHike
+from customer_churn
+group by Churn
+
+--Churn Rate By Martial Status
+
+SELECT
+    MaritalStatus,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY MaritalStatus
+ORDER BY ChurnRate DESC;
+
+
+--CHURN RATE BY ADDRESS
+
+SELECT
+    NumberOfAddress,
+    SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (SUM(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY NumberOfAddress
+ORDER BY ChurnRate DESC;
+
+--customers who churned after using a coupon and hike order amount
+
+SELECT CustomerID
+FROM customer_churn
+WHERE CAST(Churn AS INTEGER) = 1
+  AND CouponUsed > 0
+  AND OrderAmountHikeFromlastYear > 0;
+select distinct Churn from customer_churn
+
+--segmentation based on days since last order and order count
+
+select
+		case
+			when DaySinceLastOrder <= 30 then 'Recent Order'
+			when DaySinceLastOrder <= 30 then 'Mid Order'
+			else 'Infrequent Order'
+		end as OrderFrequency,
+		AVG(OrderCount) AS AverageOrderCount,
+    COUNT(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 END) AS ChurnedCustomers,
+    COUNT(*) AS TotalCustomers,
+    (COUNT(CASE WHEN CAST(Churn AS INTEGER) = 1 THEN 1 END) * 100.0 / COUNT(*)) AS ChurnRate
+FROM customer_churn
+GROUP BY OrderFrequency
+ORDER BY ChurnRate DESC;
+
+
+    
